@@ -12,7 +12,7 @@ using namespace std;
 ////Sample Problem By Bo Zhu (bo.zhu@dartmouth.edu)
 ////Macros for sample problems
 const int n=8;							////Grid size
-const bool verbose=true;				////set false to turn off print for x and residual
+const bool verbose=false;				////set false to turn off print for x and residual
 const double tolerance=1e-3;			////Tolerance for the iterative solver
 
 ////Macros for multi-gpu version
@@ -36,8 +36,7 @@ const int sn = (segment_n + p*2) * (segment_n + p*2);   ////padded array size on
 #if __CUDA_ARCH__ < 600
 __device__ double atomicCustomAdd(double* address, double val)
 {
-    unsigned long long int* address_as_ull =
-                              (unsigned long long int*)address;
+    unsigned long long int* address_as_ull = (unsigned long long int*)address;
     unsigned long long int old = *address_as_ull, assumed;
 
     do {
@@ -68,8 +67,6 @@ __global__ void Jacobi_Residue_GPU_Poorman(double* x, double* b, double* residua
     double residue = pow(4.0*x[GI(i,j)]-x[GI(i-1,j)]-x[GI(i+1,j)]-x[GI(i,j-1)]-x[GI(i,j+1)]-b[GI(i,j)],2);
     atomicCustomAdd(residual, residue);
 }
-
-ofstream out;
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 ////Host Functions
@@ -126,12 +123,11 @@ void JacobiMultiGPUSolver()
         }
     }
 
-
 	double* d_x[num_gpus][2];                   ////maintaining a read write buffer for x on every gpu
 	double* d_b[num_gpus];                      ////device buffer for b on every gpu
 	double* d_residual[num_gpus];               ////residual calculation on every gpu
 
-    int blockSize = segment_n / 8;              ////Increase accordingly, for grid 256, blockSize = 16 or 256 threads/block
+    int blockSize = segment_n / 4;              ////Increase accordingly, for grid 256, blockSize = 8 or 64 threads/block
     int iter_num = -1;                          ////One extra iteration for now
     int max_num = 1000;                         ////Maximum number of iterations to perform
 
@@ -374,9 +370,6 @@ void JacobiMultiGPUSolver()
     printf("\nGPU runtime: %.4f ms\n",total_time);
 	cout<<"Jacobi solver converges in "<<iter_num<<" iterations, with residual "<<total_residual<<endl;
 	cout<<"\n\nresidual for your GPU solver: "<<total_residual<<endl;
-
-	out<<"R0: "<<total_residual<<endl;
-	out<<"T1: "<<total_time<<endl;
 
 	for(int j=0; j<num_gpus; j++)
     {
