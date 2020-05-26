@@ -1,5 +1,5 @@
 //////////////////////////////////////////////////////////////////////////
-////This is code implements Jacobi Solver optimized for Quad GPU settings.
+////This code implements Jacobi Solver optimized for Quad GPU settings.
 ////Auhor: Anmol Chachra
 ////License: GNU General Public License v3.0
 ////Email: anmol.chachra@gmail.com
